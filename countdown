@@ -12,8 +12,8 @@
 #===================================================================================
 
 # BANNER CONIFG
-banner1="EXAM TIME!"
-banner2="KEEP CALM AND FOCUS"
+banner1="ICRA 2026!"
+banner2="KEEP CALM, WE GOT THIS!"
 
 
 
@@ -59,9 +59,15 @@ function hhmmss_format() {
 	t=$((t-m*60))
 	local s=$t
 	if [ "$mo" -gt 0 ]; then
-		printf "%d months %d days %02d:%02d:%02d" "$mo" "$d" "$h" "$m" "$s"
+		local mo_label="month"
+		[ "$mo" -gt 1 ] && mo_label="months"
+		local d_label="day"
+		[ "$d" -gt 1 ] && d_label="days"
+		printf "%d %s %d %s %02d:%02d:%02d" "$mo" "$mo_label" "$d" "$d_label" "$h" "$m" "$s"
 	elif [ "$d" -gt 0 ]; then
-		printf "%dd %02d days %02d:%02d" "$d" "$h" "$m" "$s"
+		local d_label="day"
+		[ "$d" -gt 1 ] && d_label="days"
+		printf "%d %s %02d:%02d:%02d" "$d" "$d_label" "$h" "$m" "$s"
 	else
 		printf "%02d:%02d:%02d" "$h" "$m" "$s"
 	fi
