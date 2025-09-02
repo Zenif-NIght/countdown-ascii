@@ -42,19 +42,25 @@ function print_centered() {
 
 #=== FUNCTION ==================================================================
 # NAME: hhmmss_format
-# DESCRIPTION: convert number of seconds to hh:mm:ss format
+# DESCRIPTION: convert number of seconds to dd:hh:mm:ss format
 # PARAMETERS
-#	$1	number of seconds to convert
+#   $1  number of seconds to convert
 #===============================================================================
 function hhmmss_format() {
 	local t="$1"
 	[ "$t" -lt 0 ] && t=$((t*-1))
+	local d=$((t/(60*60*24)))
+	t=$((t-d*60*60*24))
 	local h=$((t/(60*60)))
 	t=$((t-h*60*60))
 	local m=$((t/60))
 	t=$((t-m*60))
 	local s=$t
-	printf "%02d:%02d:%02d" "$h" "$m" "$s"
+	if [ "$d" -gt 0 ]; then
+		printf "%d days %02d:%02d:%02d" "$d" "$h" "$m" "$s"
+	else
+		printf "%02d:%02d:%02d" "$h" "$m" "$s"
+	fi
 }
 
 
@@ -182,14 +188,28 @@ function main() {
 	# Check if help
 	[ "$1" = "-h" ] && help
 
-	# CHECK PARAMETERS
-	until="$1"
-	from="$2"
-	[ ! "$from" ] && from="$(date +"%H:%M:%S")"
-	date -d"$(date +%Y-%m-%d) $until" &>/dev/null || { echo "$until: Incorrect hour format (hh:mm[:ss])" 1>&2; exit 1; }
-	date -d"$(date +%Y-%m-%d) $from" &>/dev/null || { echo "$from: Incorrect hour format (hh:mm[:ss])"  1>&2; exit 1; }
-	duntil="$(date -d"$(date +%Y-%m-%d) $until" +%s)"
-	dfrom="$(date -d"$(date +%Y-%m-%d) $from" +%s)"
+	   # CHECK PARAMETERS
+	   until="$1"
+	   from="$2"
+	   # Detect if UNTIL is a date+time or just time
+	   if [[ "$until" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2} ]]; then
+		   until_datetime="$until"
+	   else
+		   until_datetime="$(date +%Y-%m-%d) $until"
+	   fi
+	   # Detect if FROM is a date+time or just time
+	   if [ -z "$from" ]; then
+		   from_datetime="$(date +"%Y-%m-%d %H:%M:%S")"
+	   elif [[ "$from" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2} ]]; then
+		   from_datetime="$from"
+	   else
+		   from_datetime="$(date +%Y-%m-%d) $from"
+	   fi
+	   # Validate dates
+	   date -d"$until_datetime" &>/dev/null || { echo "$until: Incorrect date/time format (yyyy-mm-dd hh:mm[:ss] or hh:mm[:ss])" 1>&2; exit 1; }
+	   date -d"$from_datetime" &>/dev/null || { echo "$from: Incorrect date/time format (yyyy-mm-dd hh:mm[:ss] or hh:mm[:ss])"  1>&2; exit 1; }
+	   duntil="$(date -d"$until_datetime" +%s)"
+	   dfrom="$(date -d"$from_datetime" +%s)"
 
 	# CHECK DEPENDENCES
 	! which tput &>/dev/null   && {	echo "tput command not found!" 1>&2; 	exit 1; }
